@@ -3,6 +3,8 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import authRoutes from "./routes/auth.routes.js";
+import songRoutes from "./routes/song.routes.js";
+import playlistRoutes from "./routes/playlist.routes.js";
 
 const app = express();
 
@@ -15,6 +17,7 @@ app.use(
     credentials: true,
   }),
 );
-
 app.use("/api", authRoutes);
+app.use("/api", songRoutes);
+app.use("/api", playlistRoutes);
 export default app;
