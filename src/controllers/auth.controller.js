@@ -54,6 +54,18 @@ const isMatch = await bcrypt.compare(password, userFound.password);
 if (!isMatch)
   return res.status(400).json({ message: "Contraseña incorrecta" });
 
+const token = await createAccessToken({
+  id: userFound._id,
+  role: userFound.role,
+});
+
+res.cookie("token", token, {
+  httpOnly: false,
+  secure: false,
+  sameSite: "lax",
+  maxAge: 24  * 60 * 60 * 1000,
+});
+
 
 
 
