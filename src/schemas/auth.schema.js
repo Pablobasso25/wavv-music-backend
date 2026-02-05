@@ -24,3 +24,4 @@ export const registerSchema = z.object({
     }),
   role: z.string().optional(),
 });
+

@@ -36,3 +36,20 @@ export const register = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const login = async (req, res) => {
+  const { email, password } = req.body;
+
+try {
+  const userFound = await User.findOne({ email });
+    if (!userFound)
+      return res.status(400).json({ message: "Ususario no encontrado"});
+} catch (error) {
+  
+}
+}
+
+
+
+
+
