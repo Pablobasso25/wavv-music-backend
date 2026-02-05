@@ -45,12 +45,7 @@ try {
   const userFound = await User.findOne({ email });
     if (!userFound)
       return res.status(400).json({ message: "Ususario no encontrado"});
-} catch (error) {
-  
-}
-}
-
-const isMatch = await bcrypt.compare(password, userFound.password);
+    const isMatch = await bcrypt.compare(password, userFound.password);
 if (!isMatch)
   return res.status(400).json({ message: "Contraseña incorrecta" });
 
@@ -65,6 +60,21 @@ res.cookie("token", token, {
   sameSite: "lax",
   maxAge: 24  * 60 * 60 * 1000,
 });
+
+res.json({
+  id: iserFound.id,
+  username: userFound.username,
+  email: userFound.email,
+  role: userFound.role,
+});
+} catch (error) {
+  res.status(500).json({ message: error.message });
+  
+}
+};
+
+
+
 
 
 
