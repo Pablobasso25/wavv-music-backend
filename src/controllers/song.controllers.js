@@ -26,3 +26,11 @@ export const createSong = async (req, res) => {
         return res.status(500).json({message: "Error al guardar la cancion"})
     }
 }
+
+export const searchExternalSongs =  async (req, res) => {
+    const {search} = req.query;
+
+    if (!search) {
+        return res.status(400).json({message: "Se requiere un término de búsqueda"}),
+    }
+}
