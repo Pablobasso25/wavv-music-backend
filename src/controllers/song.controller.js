@@ -35,34 +35,34 @@ export const searchExternalSongs = async (req, res) => {
       .status(400)
       .json({ message: "Se requiere un término de búsqueda" });
   }
-};
 
-try {
-  const response = await fetch(
-    "https://itunes.apple.com/search?term=${encodeURIComponent(search)}&entity=song&limit=15",
-  );
+  try {
+    const response = await fetch(
+      `https://itunes.apple.com/search?term=${encodeURIComponent(search)}&entity=song&limit=15`,
+    );
 
-  const data = await response.json();
+    const data = await response.json();
 
-  if (data.resultCount === 0) {
-    return res.status(404).json({ message: "No se encontraron canciones" });
+    if (data.resultCount === 0) {
+      return res.status(404).json({ message: "No se encontraron canciones" });
+    }
+
+    const results = data.results.map((track) => ({
+      id: track.trackId,
+      title: track.trackName,
+      artist: track.artistName,
+      album: track.collectionName,
+      image: track.artworkUrl100.replace("100x100", "600x600"),
+      audio: track.previewUrl,
+      duration_ms: track.trackTimeMillis,
+    }));
+
+    res.json(results);
+  } catch (error) {
+    console.error("Error de búsqueda en iTunes:", error);
+
+    res.status(500).json({
+      message: "Error interno al buscar canciones en el servidor externo",
+    });
   }
-
-  const results = data.results.map((track) => ({
-    id: track.trackId,
-    title: track.trackName,
-    artist: track.artistName,
-    album: track.collectionName,
-    image: track.artworkUrl100.replace("100x100", "600x600"),
-    audio: track.previewUrl,
-    duration_ms: track.trackTimeMillis,
-  }));
-
-  res.json(results);
-} catch (error) {
-  console.error("Error searching in iTunes:", error);
-
-  res.status(500).json({
-    message: "Error interno al buscar canciones en el servidor externo",
-  });
-}
+};
