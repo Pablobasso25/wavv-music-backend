@@ -34,3 +34,18 @@ export const searchExternalSongs =  async (req, res) => {
         return res.status(400).json({message: "Se requiere un término de búsqueda"})
     }
 }
+
+try {
+    const response = await fetch(
+      'https://itunes.apple.com/search?term=${encodeURIComponent(search)}&entity=song&limit=15'
+    );
+
+    const data = await response.json();
+
+    if(data.resultCount === 0){
+        return res.status(404).json({message:"No se encontraron canciones"});
+    }
+
+} catch {
+
+}
