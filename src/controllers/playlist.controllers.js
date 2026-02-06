@@ -12,6 +12,13 @@ export const addSongToPlaylist = async (req, res) => {
         if (!playlist) {
             playlist = new Playlist ({ user: userId, songs: [] });
         }
+
+        if (user.subscription.status === "free" && playlist.songs.length >= 5) {
+            return res.status(403).json({
+                message: "Límite de 5 canciones alcanzado. ¡Pasate a premium!",
+                code: "PREMIUM_REQUIRED"
+            });
+        }
     } catch (error) {
         
     }
