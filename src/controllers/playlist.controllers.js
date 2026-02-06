@@ -19,7 +19,14 @@ export const addSongToPlaylist = async (req, res) => {
                 code: "PREMIUM_REQUIRED"
             });
         }
+
+            if(!playlist.songs.includes(songId)) {
+                playlist.songs.push(songId);
+                await playlist.save();
+            }
+
+        res.json({message: "Canción añadida con éxito", playlist});
     } catch (error) {
-        
+        res.status(500).json({ message: "Error al actualizar la playlist"});
     }
-}
+};
