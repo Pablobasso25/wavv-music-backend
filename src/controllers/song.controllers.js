@@ -31,6 +31,6 @@ export const searchExternalSongs =  async (req, res) => {
     const {search} = req.query;
 
     if (!search) {
-        return res.status(400).json({message: "Se requiere un término de búsqueda"}),
+        return res.status(400).json({message: "Se requiere un término de búsqueda"})
     }
 }
