@@ -4,15 +4,15 @@ import mongoose from "mongoose";
 const userSchema = new mongoose.Schema(
   {
     username: {
-      type: String,
-      required: true,
-      trim: true,
+      type: String, 
+      required: true, 
+      trim: true, 
     },
     email: {
-      type: String,
+      type: String, 
       required: true,
-      trim: true,
-      unique: true,
+      trim: true, 
+      unique: true, 
     },
     password: {
       type: String,
@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema(
 
     subscription: {
       status: { type: String, enum: ["free", "premium"], default: "free" },
-      mp_preference_id: { type: String },
+      mp_preference_id: { type: String }, 
       startDate: { type: Date },
       skipsToday: { type: Number, default: 0 }, 
       lastSkipDate: { type: Date, default: Date.now }
