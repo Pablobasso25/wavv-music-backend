@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 
+
 const userSchema = new mongoose.Schema(
   {
     username: {
@@ -22,11 +23,15 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin"],
       default: "user", 
     },
+
     subscription: {
       status: { type: String, enum: ["free", "premium"], default: "free" },
       mp_preference_id: { type: String },
       startDate: { type: Date },
+      skipsToday: { type: Number, default: 0 }, 
+      lastSkipDate: { type: Date, default: Date.now }
     },
+    active: { type: Boolean, default: true },
   },
   { timestamps: true },
 );
