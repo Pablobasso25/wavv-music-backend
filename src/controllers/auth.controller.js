@@ -1,5 +1,4 @@
 import { createAccessToken } from "../libs/jwt.js";
-import userModel from "../models/user.model.js";
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 
@@ -13,7 +12,7 @@ export const register = async (req, res) => {
       username,
       email,
       password: passwordHash,
-      role: role || "user",
+      role: role || "user", 
     });
     const userSaved = await newUser.save();
     const token = await createAccessToken({
@@ -34,42 +33,64 @@ export const register = async (req, res) => {
       updatedAt: userSaved.updatedAt,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    if (error.code === 11000) {
+      return res.status(400).json(["El email ya está registrado"]);
+    }
+    return res.status(500).json([error.message]);
   }
 };
 
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
-try {
-  const userFound = await User.findOne({ email });
+  try {
+    const userFound = await User.findOne({ email });
     if (!userFound)
-      return res.status(400).json({ message: "Ususario no encontrado"});
+      return res.status(400).json({ message: "Usuario no encontrado" });
+    if (!userFound.active)
+      return res.status(403).json({
+        message: "Cuenta desactivada. Por favor, contáctanos para reactivarla.",
+      });
     const isMatch = await bcrypt.compare(password, userFound.password);
-if (!isMatch)
-  return res.status(400).json({ message: "Contraseña incorrecta" });
+    if (!isMatch)
+      return res.status(400).json({ message: "Contraseña incorrecta" });
+    const token = await createAccessToken({
+      id: userFound._id,
+      role: userFound.role,
+    });
+    res.cookie("token", token, {
+      httpOnly: false,
+      secure: false,
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+    res.json({
+      id: userFound._id,
+      username: userFound.username,
+      email: userFound.email,
+      role: userFound.role,
+      subscription: userFound.subscription?.status || "free",
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
-const token = await createAccessToken({
-  id: userFound._id,
-  role: userFound.role,
-});
 
-res.cookie("token", token, {
-  httpOnly: false,
-  secure: false,
-  sameSite: "lax",
-  maxAge: 24  * 60 * 60 * 1000,
-});
-
-res.json({
-  id: iserFound.id,
-  username: userFound.username,
-  email: userFound.email,
-  role: userFound.role,
-});
-} catch (error) {
-  res.status(500).json({ message: error.message });
-}
+export const deleteAccount = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { active: false },
+      { new: true },
+    );
+    if (!user)
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    res.cookie("token", "", { expires: new Date(0) });
+    res.json({ message: "Cuenta desactivada correctamente" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 export const logout = (req, res) => {
