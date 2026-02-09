@@ -76,6 +76,23 @@ export const login = async (req, res) => {
   }
 };
 
+
+export const deleteAccount = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { active: false },
+      { new: true },
+    );
+    if (!user)
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    res.cookie("token", "", { expires: new Date(0) });
+    res.json({ message: "Cuenta desactivada correctamente" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const logout = (req, res) => {
   res.cookie("token", "", {
     expires: new Date(0),
