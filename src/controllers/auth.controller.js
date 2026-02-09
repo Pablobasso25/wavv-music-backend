@@ -43,35 +43,37 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
-try {
-  const userFound = await User.findOne({ email });
+  try {
+    const userFound = await User.findOne({ email });
     if (!userFound)
-      return res.status(400).json({ message: "Ususario no encontrado"});
+      return res.status(400).json({ message: "Usuario no encontrado" });
+    if (!userFound.active)
+      return res.status(403).json({
+        message: "Cuenta desactivada. Por favor, contáctanos para reactivarla.",
+      });
     const isMatch = await bcrypt.compare(password, userFound.password);
-if (!isMatch)
-  return res.status(400).json({ message: "Contraseña incorrecta" });
-
-const token = await createAccessToken({
-  id: userFound._id,
-  role: userFound.role,
-});
-
-res.cookie("token", token, {
-  httpOnly: false,
-  secure: false,
-  sameSite: "lax",
-  maxAge: 24  * 60 * 60 * 1000,
-});
-
-res.json({
-  id: iserFound.id,
-  username: userFound.username,
-  email: userFound.email,
-  role: userFound.role,
-});
-} catch (error) {
-  res.status(500).json({ message: error.message });
-}
+    if (!isMatch)
+      return res.status(400).json({ message: "Contraseña incorrecta" });
+    const token = await createAccessToken({
+      id: userFound._id,
+      role: userFound.role,
+    });
+    res.cookie("token", token, {
+      httpOnly: false,
+      secure: false,
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+    res.json({
+      id: userFound._id,
+      username: userFound.username,
+      email: userFound.email,
+      role: userFound.role,
+      subscription: userFound.subscription?.status || "free",
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 export const logout = (req, res) => {
