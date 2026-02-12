@@ -1,5 +1,4 @@
 import { createAccessToken } from "../libs/jwt.js";
-import userModel from "../models/user.model.js";
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 
@@ -13,7 +12,7 @@ export const register = async (req, res) => {
       username,
       email,
       password: passwordHash,
-      role: role || "user",
+      role: role || "user", 
     });
     const userSaved = await newUser.save();
     const token = await createAccessToken({
@@ -34,7 +33,10 @@ export const register = async (req, res) => {
       updatedAt: userSaved.updatedAt,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    if (error.code === 11000) {
+      return res.status(400).json(["El email ya está registrado"]);
+    }
+    return res.status(500).json([error.message]);
   }
 };
 
