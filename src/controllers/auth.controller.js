@@ -21,10 +21,10 @@ export const register = async (req, res) => {
       role: userSaved.role,
     });
     res.cookie("token", token, {
-      httpOnly: false, 
+      httpOnly: false,
       secure: false,
       sameSite: "lax",
-      maxAge: 24 * 60 * 60 * 1000, 
+      maxAge: 24 * 60 * 60 * 1000,
     });
     res.json({
       id: userSaved._id,
@@ -41,35 +41,35 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
-try {
-  const userFound = await User.findOne({ email });
+  try {
+    const userFound = await User.findOne({ email });
     if (!userFound)
-      return res.status(400).json({ message: "Ususario no encontrado"});
+      return res.status(400).json({ message: "Ususario no encontrado" });
     const isMatch = await bcrypt.compare(password, userFound.password);
-if (!isMatch)
-  return res.status(400).json({ message: "Contraseña incorrecta" });
+    if (!isMatch)
+      return res.status(400).json({ message: "Contraseña incorrecta" });
 
-const token = await createAccessToken({
-  id: userFound._id,
-  role: userFound.role,
-});
+    const token = await createAccessToken({
+      id: userFound._id,
+      role: userFound.role,
+    });
 
-res.cookie("token", token, {
-  httpOnly: false,
-  secure: false,
-  sameSite: "lax",
-  maxAge: 24  * 60 * 60 * 1000,
-});
+    res.cookie("token", token, {
+      httpOnly: false,
+      secure: false,
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
 
-res.json({
-  id: iserFound.id,
-  username: userFound.username,
-  email: userFound.email,
-  role: userFound.role,
-});
-} catch (error) {
-  res.status(500).json({ message: error.message });
-}
+    res.json({
+      id: userFound.id,
+      username: userFound.username,
+      email: userFound.email,
+      role: userFound.role,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 export const logout = (req, res) => {
@@ -90,6 +90,3 @@ export const profile = async (req, res) => {
     email: userFound.email,
   });
 };
-
-
-
