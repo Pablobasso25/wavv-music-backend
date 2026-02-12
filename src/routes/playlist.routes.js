@@ -1,6 +1,10 @@
 import { Router } from "express";
 import { authRequired } from "../middlewares/validateToken.js";
-import { addSongToPlaylist } from "../controllers/playlist.controller.js";
+import {
+  addSongToPlaylist,
+  removeSongFromPlaylist,
+  getUserPlaylist,
+} from "../controllers/playlist.controller.js";
 import { validateSchema } from "../middlewares/validator.middleware.js";
 import { addSongSchema } from "../schemas/playlist.schema.js";
 
@@ -11,5 +15,6 @@ router.post(
   validateSchema(addSongSchema),
   addSongToPlaylist,
 );
-
+router.get("/playlist", authRequired, getUserPlaylist);
+router.delete("/playlist/:songId", authRequired, removeSongFromPlaylist);
 export default router;
