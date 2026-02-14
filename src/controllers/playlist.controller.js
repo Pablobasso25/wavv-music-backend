@@ -13,17 +13,25 @@ export const addSongToPlaylist = async (req, res) => {
       playlist = new Playlist({ user: userId, songs: [] });
     }
 
-    if (user.subscription.status === "free" && playlist.songs.length >= 5) {
+    const isFreeUser = user.subscription.status === "free";
+
+    if (isFreeUser && playlist.songs.length >= 5) {
       return res.status(403).json({
         message: "Límite de 5 canciones alcanzado. ¡Pasate a premium!",
         code: "PREMIUM_REQUIRED",
       });
     }
+    const songExists = playlist.songs.some(
+      (song) => song.toString() === songId,
+    );
 
-    if (!playlist.songs.includes(songId)) {
-      playlist.songs.push(songId);
-      await playlist.save();
+    if (songExists) {
+      return res
+        .status(200)
+        .json({ message: "La canción ya estaba en tu playlist", playlist });
     }
+    playlist.songs.push(songId);
+    await playlist.save();
 
     res.json({ message: "Canción añadida con éxito", playlist });
   } catch (error) {
