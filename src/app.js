@@ -21,5 +21,5 @@ app.use(
 app.use("/api", authRoutes);
 app.use("/api", songRoutes);
 app.use("/api", playlistRoutes);
-app.use("/api/users", userRoutes);
+app.use("/api", userRoutes);
 export default app;
