@@ -12,7 +12,7 @@ export const register = async (req, res) => {
       username,
       email,
       password: passwordHash,
-      role: role || "user", 
+      role: role || "user",
     });
     const userSaved = await newUser.save();
     const token = await createAccessToken({
@@ -29,8 +29,10 @@ export const register = async (req, res) => {
       id: userSaved._id,
       username: userSaved.username,
       email: userSaved.email,
+      subscription: userSaved.subscription,
       createdAt: userSaved.createdAt,
       updatedAt: userSaved.updatedAt,
+      role: userSaved.role,
     });
   } catch (error) {
     if (error.code === 11000) {
@@ -67,6 +69,7 @@ export const login = async (req, res) => {
       id: userFound.id,
       username: userFound.username,
       email: userFound.email,
+      subscription: userSaved.subscription,
       role: userFound.role,
     });
   } catch (error) {
@@ -90,5 +93,6 @@ export const profile = async (req, res) => {
     id: userFound._id,
     username: userFound.username,
     email: userFound.email,
+    subscription: userFound.subscription,
   });
 };
