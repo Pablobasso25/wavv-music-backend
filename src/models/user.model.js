@@ -15,17 +15,26 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true, 
+      required: true,
     },
     role: {
       type: String,
       enum: ["user", "admin"],
-      default: "user", 
+      default: "user",
     },
     subscription: {
       status: { type: String, enum: ["free", "premium"], default: "free" },
       mp_preference_id: { type: String },
       startDate: { type: Date },
+    },
+    bio: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    avatar: {
+      type: String,
+      default: "",
     },
   },
   { timestamps: true },
