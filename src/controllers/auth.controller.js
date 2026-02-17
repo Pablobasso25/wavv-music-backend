@@ -1,7 +1,7 @@
 import { createAccessToken } from "../libs/jwt.js";
 import User from "../models/user.model.js";
+import { sendEmail } from "./email.controller.js";
 import bcrypt from "bcryptjs";
-import cloudinary from "../libs/cloudinary.js"; 
 
 export const register = async (req, res) => {
   const { email, password, username, role } = req.body;
@@ -14,6 +14,12 @@ export const register = async (req, res) => {
       role: role || "user",
     });
     const userSaved = await newUser.save();
+    sendEmail({
+      to_name: userSaved.username,
+      to_email: userSaved.email,
+      asunto_dinamico: "¡Bienvenido a Wavv Music!",
+      cuerpo_mensaje: `Gracias por unirte a Wavv Music. Ahora puedes disfrutar de miles de canciones. ¡Comienza a escuchar!`,
+    }).catch(() => {});
     const token = await createAccessToken({
       id: userSaved._id,
       role: userSaved.role,
@@ -63,7 +69,7 @@ export const login = async (req, res) => {
       id: userFound.id,
       username: userFound.username,
       email: userFound.email,
-      subscription: userSaved.subscription,
+      subscription: userFound.subscription,
       role: userFound.role,
     });
   } catch (error) {
@@ -75,63 +81,4 @@ export const logout = (req, res) => {
     expires: new Date(0),
   });
   return res.sendStatus(200);
-};
-export const profile = async (req, res) => {
-  const userFound = await User.findById(req.user.id);
-  if (!userFound)
-    return res.status(400).json({ message: "Usuario no encontrado" });
-  return res.json({
-    id: userFound._id,
-    username: userFound.username,
-    email: userFound.email,
-    bio: userFound.bio, 
-    avatar: userFound.avatar, 
-    subscription: userFound.subscription,
-  });
-};
-export const updateProfile = async (req, res) => {
-  try {
-    const { username, bio } = req.body;
-    let avatar;
-    if (req.file) {
-      const result = await cloudinary.uploader.upload_stream(
-        { folder: "avatars" },
-        (error, result) => {
-          if (error) throw error;
-          return result;
-        }
-      );
-      const uploadPromise = new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          { folder: "avatars" },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        );
-        stream.end(req.file.buffer);
-      });
-      const uploadResult = await uploadPromise;
-      avatar = uploadResult.secure_url;
-    }
-    const updateData = { username, bio };
-    if (avatar) updateData.avatar = avatar;
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user.id,
-      updateData,
-      { new: true }
-    );
-    if (!updatedUser) {
-      return res.status(404).json({ message: "Usuario no encontrado" });
-    }
-    return res.json({
-      id: updatedUser._id,
-      username: updatedUser.username,
-      email: updatedUser.email,
-      bio: updatedUser.bio,
-      avatar: updatedUser.avatar,
-    });
-  } catch (error) {
-    return res.status(500).json({ message: error.message });
-  }
 };
