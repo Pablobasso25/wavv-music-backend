@@ -28,6 +28,23 @@ export const startSubscriptionChecker = () => {
         user.subscription.warningEmailSent = true;
         await user.save();
       }
+
+      const result = await User.updateMany(
+        {
+          "subscription.status": "premium",
+          "subscription.endDate": { $lt: now },
+        },
+        {
+          $set: {
+            "subscription.status": "free",
+            "subscription.warningEmailSent": false,
+          },
+        },
+      );
+
+      if (result.modifiedCount > 0) {
+        console.log(` ${result.modifiedCount} suscripciones expiradas`);
+      }
     } catch (error) {
       console.error(" Error en subscription checker:", error);
     }
