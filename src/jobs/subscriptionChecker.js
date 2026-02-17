@@ -8,10 +8,30 @@ export const startSubscriptionChecker = () => {
       const now = new Date();
       const twoMinutesFromNow = new Date(now.getTime() + 2 * 60000);
 
+      const expiringUsers = await User.find({
+        "subscription.status": "premium",
+        "subscription.endDate": {
+          $gte: now,
+          $lte: twoMinutesFromNow,
+        },
+        "subscription.warningEmailSent": { $ne: true },
+      });
+
+      for (const user of expiringUsers) {
+        await sendEmail({
+          to_name: user.username,
+          to_email: user.email,
+          asunto_dinamico: "Tu suscripción Premium está por expirar",
+          cuerpo_mensaje: `Tu suscripción Premium expira el ${user.subscription.endDate.toLocaleString()}. Renueva ahora para seguir disfrutando sin interrupciones.`,
+        });
+
+        user.subscription.warningEmailSent = true;
+        await user.save();
+      }
     } catch (error) {
       console.error(" Error en subscription checker:", error);
     }
   });
-  
+
   console.log(" Subscription checker iniciado");
 };
