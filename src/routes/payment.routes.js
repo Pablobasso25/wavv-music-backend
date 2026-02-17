@@ -3,6 +3,7 @@ import { authRequired } from "../middlewares/validateToken.js";
 import { validateSchema } from "../middlewares/validator.middleware.js";
 import { createPreferenceSchema } from "../schemas/payment.schema.js";
 import { createPreference } from "../controllers/payment.controller.js";
+import { sendEmail } from "../controllers/email.controller.js";
 import User from "../models/user.model.js";
 
 const router = Router();
@@ -30,18 +31,30 @@ router.post("/payments/webhook", async (req, res) => {
 
       if (data.status === "approved") {
         const userId = data.external_reference;
+        const startDate = new Date();
+        const endDate = new Date(startDate);
+        endDate.setMinutes(endDate.getMinutes() + 5);
 
-        await User.findByIdAndUpdate(userId, {
-          "subscription.status": "premium",
-          "subscription.mp_preference_id": data.order.id,
-          "subscription.startDate": new Date(),
-        });
-        console.log(`Usuario ${userId} ahora es PREMIUM`);
+        const updatedUser = await User.findByIdAndUpdate(
+          userId,
+          {
+            "subscription.status": "premium",
+            "subscription.mp_preference_id": data.order.id,
+            "subscription.startDate": startDate,
+            "subscription.endDate": endDate,
+          },
+          { new: true },
+        );
+        sendEmail({
+          to_name: updatedUser.username,
+          to_email: updatedUser.email,
+          asunto_dinamico: "¡Ahora sos Premium en Wavv Music!",
+          cuerpo_mensaje: `¡Felicidades! Tu suscripción Premium ha sido activada. Disfruta de música sin anuncios, playlist ilimitada y calidad superior. Tu suscripción expira el ${endDate.toLocaleString()}.`,
+        }).catch(() => {});
       }
     }
     res.sendStatus(200);
   } catch (error) {
-    console.error("Error en Webhook:", error);
     res.sendStatus(500);
   }
 });
