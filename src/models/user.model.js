@@ -26,6 +26,8 @@ const userSchema = new mongoose.Schema(
       status: { type: String, enum: ["free", "premium"], default: "free" },
       mp_preference_id: { type: String },
       startDate: { type: Date },
+      endDate: { type: Date },
+      warningEmailSent: { type: Boolean, default: false },
     },
     bio: {
       type: String,
