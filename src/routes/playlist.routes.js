@@ -5,14 +5,11 @@ import {
   removeSongFromPlaylist,
   getUserPlaylist,
 } from "../controllers/playlist.controller.js";
-import { validateSchema } from "../middlewares/validator.middleware.js";
-import { addSongSchema } from "../schemas/playlist.schema.js";
 
 const router = Router();
 router.post(
   "/playlist/add",
   authRequired,
-  validateSchema(addSongSchema),
   addSongToPlaylist,
 );
 router.get("/playlist", authRequired, getUserPlaylist);
