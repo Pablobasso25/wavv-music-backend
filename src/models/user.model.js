@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema(
       default: "user",
     },
     subscription: {
-      status: { type: String, enum: ["free", "premium"], default: "free" },
+      status: { type: String, enum: ["free", "premium", "admin"], default: "free" },
       mp_preference_id: { type: String },
       startDate: { type: Date },
       endDate: { type: Date },
@@ -38,6 +38,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    isActive: { type: Boolean, default: true }
   },
   { timestamps: true },
 );

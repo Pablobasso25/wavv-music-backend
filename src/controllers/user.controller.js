@@ -141,7 +141,6 @@ export const activateUser = async (req, res) => {
 export const updateUser = async (req, res) => {
   try {
     const { username, email, subscriptionStatus } = req.body;
-
     const updateData = {
       username,
       email,

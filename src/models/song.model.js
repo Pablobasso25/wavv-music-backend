@@ -7,6 +7,7 @@ const songSchema = new mongoose.Schema(
     image: { type: String }, 
     youtubeUrl: { type: String, required: true }, 
     duration: { type: String },
+    isTrending: { type: Boolean, default: false },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
