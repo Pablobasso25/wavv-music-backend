@@ -83,3 +83,95 @@ export const changePassword = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password");
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener usuarios" });
+  }
+};
+
+export const getUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password");
+    res.json(users);
+  } catch (error) {
+    return res.status(500).json({ message: "Error al obtener usuarios" });
+  }
+};
+
+export const deactivateUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { isActive: false },
+      { new: true },
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    res.json({ message: "Usuario dado de baja", user });
+  } catch (error) {
+    return res.status(500).json({ message: "Error al dar de baja usuario" });
+  }
+};
+
+export const activateUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { isActive: true },
+      { new: true },
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    res.json({ message: "Usuario dado de alta", user });
+  } catch (error) {
+    return res.status(500).json({ message: "Error al dar de alta usuario" });
+  }
+};
+
+export const updateUser = async (req, res) => {
+  try {
+    const { username, email, subscriptionStatus } = req.body;
+
+    const updateData = {
+      username,
+      email,
+      "subscription.status": subscriptionStatus,
+    };
+
+    const user = await User.findByIdAndUpdate(req.params.id, updateData, {
+      new: true,
+    }).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    res.json({ message: "Usuario actualizado", user });
+  } catch (error) {
+    return res.status(500).json({ message: "Error al actualizar usuario" });
+  }
+};
+
+export const deleteUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    res.json({ message: "Usuario eliminado permanentemente" });
+  } catch (error) {
+    return res.status(500).json({ message: "Error al eliminar usuario" });
+  }
+};
