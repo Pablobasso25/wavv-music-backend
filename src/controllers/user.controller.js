@@ -22,7 +22,7 @@ export const profile = async (req, res) => {
         return res.json({
           ...userFound.toObject(),
           subscriptionAlert: {
-            message: Tu suscripción expira en ${minutesLeft} minuto(s),
+            message: `Tu suscripción expira en ${minutesLeft} minuto(s)`,
             minutesLeft,
           },
         });
@@ -49,7 +49,7 @@ export const updateProfile = async (req, res) => {
 
     if (req.file) {
       const b64 = Buffer.from(req.file.buffer).toString("base64");
-      const dataURI = data:${req.file.mimetype};base64,${b64};
+      const dataURI = `data:${req.file.mimetype};base64,${b64}`;
 
       const result = await cloudinary.uploader.upload(dataURI, {
         folder: "avatars",
@@ -148,11 +148,9 @@ export const updateUser = async (req, res) => {
       "subscription.status": subscriptionStatus,
     };
     
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      { new: true }
-    ).select("-password");
+    const user = await User.findByIdAndUpdate(req.params.id, updateData, {
+      new: true,
+    }).select("-password");
     
     if (!user) {
       return res.status(404).json({ message: "Usuario no encontrado" });
