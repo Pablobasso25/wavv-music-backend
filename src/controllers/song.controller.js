@@ -66,3 +66,42 @@ export const searchExternalSongs = async (req, res) => {
     });
   }
 };
+
+export const deleteSong = async (req, res) => {
+  try {
+    const song = await Song.findByIdAndDelete(req.params.id);
+    if (!song) {
+      return res.status(404).json({ message: "Canción no encontrada" });
+    }
+    res.json({ message: "Canción eliminada correctamente" });
+  } catch (error) {
+    return res.status(500).json({ message: "Error al eliminar canción" });
+  }
+};
+export const setTrendingSong = async (req, res) => {
+  try {
+    await Song.updateMany({}, { isTrending: false });
+    
+    const song = await Song.findByIdAndUpdate(
+      req.params.id,
+      { isTrending: true },
+      { new: true }
+    );
+    
+    if (!song) {
+      return res.status(404).json({ message: "Canción no encontrada" });
+    }
+    
+    res.json({ message: "Canción marcada como trending", song });
+  } catch (error) {
+    return res.status(500).json({ message: "Error al marcar trending" });
+  }
+};
+export const getTrendingSong = async (req, res) => {
+  try {
+    const song = await Song.findOne({ isTrending: true });
+    res.json(song);
+  } catch (error) {
+    return res.status(500).json({ message: "Error al obtener trending" });
+  }
+};
