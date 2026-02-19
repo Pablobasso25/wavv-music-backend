@@ -8,3 +8,21 @@ export const getAlbums = async (req, res) => {
     return res.status(500).json({ message: "Error al obtener álbumes" });
   }
 };
+
+export const createAlbum = async (req, res) => {
+  try {
+    const { collectionId, name, artistName, image, tracks } = req.body;
+    const newAlbum = new Album({
+      collectionId,
+      name,
+      artistName,
+      image,
+      tracks,
+      user: req.user.id,
+    });
+    const savedAlbum = await newAlbum.save();
+    res.status(201).json(savedAlbum);
+  } catch (error) {
+    return res.status(500).json({ message: "Error al guardar el álbum" });
+  }
+};
