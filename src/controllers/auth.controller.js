@@ -6,6 +6,14 @@ import bcrypt from "bcryptjs";
 export const register = async (req, res) => {
   const { email, password, username, role } = req.body;
   try {
+    
+    if (role === "admin") {
+      const adminExists = await User.findOne({ role: "admin" });
+      if (adminExists) {
+        return res.status(400).json(["Ya existe un administrador en el sistema"]);
+      }
+    }
+    
     const passwordHash = await bcrypt.hash(password, 10);
     const newUser = new User({
       username,
@@ -52,6 +60,9 @@ export const login = async (req, res) => {
     const userFound = await User.findOne({ email });
     if (!userFound)
       return res.status(400).json({ message: "Ususario no encontrado" });
+     if (userFound.isActive === false) {
+      return res.status(403).json({ message: "Usuario dado de baja. Contacta al administrador." });
+    }
     const isMatch = await bcrypt.compare(password, userFound.password);
     if (!isMatch)
       return res.status(400).json({ message: "Contraseña incorrecta" });
