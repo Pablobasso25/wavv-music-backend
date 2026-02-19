@@ -66,3 +66,15 @@ export const searchExternalSongs = async (req, res) => {
     });
   }
 };
+
+export const deleteSong = async (req, res) => {
+  try {
+    const song = await Song.findByIdAndDelete(req.params.id);
+    if (!song) {
+      return res.status(404).json({ message: "Canción no encontrada" });
+    }
+    res.json({ message: "Canción eliminada correctamente" });
+  } catch (error) {
+    return res.status(500).json({ message: "Error al eliminar canción" });
+  }
+};
