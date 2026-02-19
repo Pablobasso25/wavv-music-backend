@@ -97,3 +97,11 @@ export const setTrendingSong = async (req, res) => {
     return res.status(500).json({ message: "Error al marcar trending" });
   }
 };
+export const getTrendingSong = async (req, res) => {
+  try {
+    const song = await Song.findOne({ isTrending: true });
+    res.json(song);
+  } catch (error) {
+    return res.status(500).json({ message: "Error al obtener trending" });
+  }
+};
