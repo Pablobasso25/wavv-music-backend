@@ -88,3 +88,22 @@ export const getUserPlaylist = async (req, res) => {
     res.status(500).json({ message: "Error al obtener la playlist" });
   }
 };
+export const removeSongFromPlaylist = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { songId } = req.params;
+
+    const playlist = await Playlist.findOne({ user: userId });
+
+    if (!playlist) {
+      return res.status(404).json({ message: "Playlist no encontrada" });
+    }
+
+    playlist.songs.pull(songId);
+    await playlist.save();
+
+    res.json({ message: "Canción eliminada", playlist });
+  } catch (error) {
+    res.status(500).json({ message: "Error al eliminar canción" });
+  }
+};
