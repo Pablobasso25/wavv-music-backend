@@ -26,3 +26,15 @@ export const createAlbum = async (req, res) => {
     return res.status(500).json({ message: "Error al guardar el álbum" });
   }
 };
+
+export const deleteAlbum = async (req, res) => {
+  try {
+    const album = await Album.findByIdAndDelete(req.params.id);
+    if (!album) {
+      return res.status(404).json({ message: "Álbum no encontrado" });
+    }
+    res.json({ message: "Álbum eliminado correctamente" });
+  } catch (error) {
+    return res.status(500).json({ message: "Error al eliminar álbum" });
+  }
+};
