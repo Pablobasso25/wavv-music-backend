@@ -74,3 +74,17 @@ export const addSongToPlaylist = async (req, res) => {
     return res.status(500).json({ message: "Error al agregar canción" });
   }
 };
+export const getUserPlaylist = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const playlist = await Playlist.findOne({ user: userId }).populate("songs");
+
+    if (!playlist) {
+      return res.json([]);
+    }
+
+    res.json(playlist.songs);
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener la playlist" });
+  }
+};
