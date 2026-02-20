@@ -1,5 +1,7 @@
 import Playlist from "../models/playlist.model.js";
 import User from "../models/user.model.js";
+import Song from "../models/song.model.js";
+import mongoose from "mongoose";
 
 export const addSongToPlaylist = async (req, res) => {
   try {
