@@ -1,9 +1,12 @@
 import { MercadoPagoConfig, Preference } from "mercadopago";
-import User from "../models/user.model.js"
+import User from "../models/user.model.js";
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN,
 });
+
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:4000";
 
 export const createPreference = async (req, res) => {
   try {
@@ -21,11 +24,11 @@ export const createPreference = async (req, res) => {
           },
         ],
         back_urls: {
-          success: "https://unnationalistic-nonapparently-edmund.ngrok-free.dev/api/payments/success",
-          failure: "https://unnationalistic-nonapparently-edmund.ngrok-free.dev/api/payments/failure",
-          pending: "https://unnationalistic-nonapparently-edmund.ngrok-free.dev/api/payments/pending",
+          success: `${FRONTEND_URL}/profile`, 
+          failure: `${FRONTEND_URL}/subscription`,
+          pending: `${FRONTEND_URL}/subscription`,
         },
-        notification_url: "https://unnationalistic-nonapparently-edmund.ngrok-free.dev/api/payments/webhook",
+        notification_url: `${BACKEND_URL}/api/payments/webhook`,
         external_reference: String(req.user.id),
       },
     });
@@ -49,7 +52,7 @@ export const receiveWebhook = async (req, res) => {
           headers: {
             Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`,
           },
-        },
+        }
       );
 
       const data = await response.json();
@@ -70,6 +73,7 @@ export const receiveWebhook = async (req, res) => {
     }
     res.sendStatus(200);
   } catch (error) {
+    console.error("Error en Webhook:", error.message);
     res.sendStatus(500);
   }
 };
