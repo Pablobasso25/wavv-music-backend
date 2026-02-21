@@ -9,7 +9,9 @@ export const sendEmail = async ({
   cuerpo_mensaje,
 }) => {
   try {
-    await resend.emails.send({
+    console.log("📧 Intentando enviar email a:", to_email);
+    
+    const result = await resend.emails.send({
       from: 'Wavv Music <onboarding@resend.dev>',
       to: to_email,
       subject: asunto_dinamico,
@@ -27,8 +29,11 @@ export const sendEmail = async ({
         </div>
       `,
     });
+    
+    console.log("✅ Email enviado exitosamente:", result);
     return { success: true };
   } catch (error) {
+    console.error("❌ Error en sendEmail:", error);
     return { success: false, error: error.message };
   }
 };
