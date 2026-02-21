@@ -23,12 +23,20 @@ export const register = async (req, res) => {
       role: role || "user",
     });
     const userSaved = await newUser.save();
-    sendEmail({
-      to_name: userSaved.username,
-      to_email: userSaved.email,
-      asunto_dinamico: "¡Bienvenido a Wavv Music!",
-      cuerpo_mensaje: `Gracias por unirte a Wavv Music. Ahora puedes disfrutar de miles de canciones. ¡Comienza a escuchar!`,
-    }).catch((err) => console.error("❌ Error enviando email:", err));
+    
+    console.log("👤 Usuario guardado, enviando email...");
+    
+    try {
+      await sendEmail({
+        to_name: userSaved.username,
+        to_email: userSaved.email,
+        asunto_dinamico: "¡Bienvenido a Wavv Music!",
+        cuerpo_mensaje: `Gracias por unirte a Wavv Music. Ahora puedes disfrutar de miles de canciones. ¡Comienza a escuchar!`,
+      });
+    } catch (emailError) {
+      console.error("❌ Error enviando email de bienvenida:", emailError);
+    }
+    
     const token = await createAccessToken({
       id: userSaved._id,
       role: userSaved.role,
