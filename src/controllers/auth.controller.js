@@ -28,7 +28,7 @@ export const register = async (req, res) => {
       to_email: userSaved.email,
       asunto_dinamico: "¡Bienvenido a Wavv Music!",
       cuerpo_mensaje: `Gracias por unirte a Wavv Music. Ahora puedes disfrutar de miles de canciones. ¡Comienza a escuchar!`,
-    }).catch(() => {});
+    }).catch((err) => console.error("❌ Error enviando email:", err));
     const token = await createAccessToken({
       id: userSaved._id,
       role: userSaved.role,
