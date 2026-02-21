@@ -6,14 +6,15 @@ import bcrypt from "bcryptjs";
 export const register = async (req, res) => {
   const { email, password, username, role } = req.body;
   try {
-    
     if (role === "admin") {
       const adminExists = await User.findOne({ role: "admin" });
       if (adminExists) {
-        return res.status(400).json(["Ya existe un administrador en el sistema"]);
+        return res
+          .status(400)
+          .json(["Ya existe un administrador en el sistema"]);
       }
     }
-    
+
     const passwordHash = await bcrypt.hash(password, 10);
     const newUser = new User({
       username,
@@ -33,9 +34,9 @@ export const register = async (req, res) => {
       role: userSaved.role,
     });
     res.cookie("token", token, {
-      httpOnly: false,
-      secure: false,
-      sameSite: "lax",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 24 * 60 * 60 * 1000,
     });
     res.json({
@@ -60,8 +61,10 @@ export const login = async (req, res) => {
     const userFound = await User.findOne({ email });
     if (!userFound)
       return res.status(400).json({ message: "Ususario no encontrado" });
-     if (userFound.isActive === false) {
-      return res.status(403).json({ message: "Usuario dado de baja. Contacta al administrador." });
+    if (userFound.isActive === false) {
+      return res
+        .status(403)
+        .json({ message: "Usuario dado de baja. Contacta al administrador." });
     }
     const isMatch = await bcrypt.compare(password, userFound.password);
     if (!isMatch)
@@ -71,9 +74,9 @@ export const login = async (req, res) => {
       role: userFound.role,
     });
     res.cookie("token", token, {
-      httpOnly: false,
-      secure: false,
-      sameSite: "lax",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 24 * 60 * 60 * 1000,
     });
     res.json({
@@ -90,6 +93,9 @@ export const login = async (req, res) => {
 export const logout = (req, res) => {
   res.cookie("token", "", {
     expires: new Date(0),
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   });
   return res.sendStatus(200);
 };
