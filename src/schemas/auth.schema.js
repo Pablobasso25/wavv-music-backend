@@ -3,20 +3,44 @@ import { z } from "zod";
 export const registerSchema = z.object({
   username: z
     .string({ required_error: "El nombre de usuario es requerido" })
-    .min(3, "El nombre de usuario debe tener al menos 3 caracteres"),
+    .min(2, "El nombre de usuario debe tener al menos 2 caracteres")
+    .max(30, "El nombre de usuario no puede tener más de 30 caracteres")
+    .regex(/^[a-zA-Z0-9_]+$/, "Solo letras, números y guiones bajos"),
   email: z
     .string({ required_error: "El email es requerido" })
-    .email("Email inválido"),
+    .email("Email inválido")
+    .max(50, "El email no puede tener más de 50 caracteres"),
   password: z
     .string({ required_error: "La contraseña es requerida" })
-    .min(8, "La contraseña debe tener al menos 8 caracteres") // Subimos a 8
+    .min(8, "La contraseña debe tener al menos 8 caracteres")
+    .max(20, "La contraseña no puede tener más de 20 caracteres")
     .regex(/[A-Z]/, "Debe tener al menos una mayúscula")
     .regex(/[a-z]/, "Debe tener al menos una minúscula")
     .regex(/\d/, "Debe tener al menos un número")
-    .regex(/[!@#$%^&*(),.?":{}|_/<>]/, "Debe tener al menos un símbolo"),
+    .regex(/[!@#$%^&*(),.?":{}|_/]/, "Debe tener al menos un símbolo")
+    .refine((val) => !/\s/.test(val), "La contraseña no puede contener espacios")
+    .refine((val) => !/[<>]/.test(val), "La contraseña no puede contener < o >"),
 });
 
 export const loginSchema = z.object({
   email: z.string().email("Email inválido"),
   password: z.string().min(1, "La contraseña es requerida"),
+});
+
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string({ required_error: "El email es obligatorio" })
+    .min(5, "El email debe tener al menos 5 caracteres")
+    .max(50, "El email no puede tener más de 50 caracteres")
+    .email("Email inválido"),
+});
+export const resetPasswordSchema = z.object({
+  password: z
+    .string({ required_error: "La contraseña es obligatoria" })
+    .min(8, "Mínimo 8 caracteres")
+    .max(20, "Máximo 20 caracteres")
+    .regex(/[A-Z]/, "Debe tener una mayúscula")
+    .regex(/[a-z]/, "Debe tener una minúscula")
+    .regex(/\d/, "Debe tener un número")
+    .regex(/[!@#$%^&*(),.?":{}|_/]/, "Debe tener un símbolo"),
 });
