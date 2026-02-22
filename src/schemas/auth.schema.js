@@ -26,3 +26,21 @@ export const loginSchema = z.object({
   email: z.string().email("Email inválido"),
   password: z.string().min(1, "La contraseña es requerida"),
 });
+
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string({ required_error: "El email es obligatorio" })
+    .min(5, "El email debe tener al menos 5 caracteres")
+    .max(50, "El email no puede tener más de 50 caracteres")
+    .email("Email inválido"),
+});
+export const resetPasswordSchema = z.object({
+  password: z
+    .string({ required_error: "La contraseña es obligatoria" })
+    .min(8, "Mínimo 8 caracteres")
+    .max(20, "Máximo 20 caracteres")
+    .regex(/[A-Z]/, "Debe tener una mayúscula")
+    .regex(/[a-z]/, "Debe tener una minúscula")
+    .regex(/\d/, "Debe tener un número")
+    .regex(/[!@#$%^&*(),.?":{}|_/]/, "Debe tener un símbolo"),
+});
