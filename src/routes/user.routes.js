@@ -12,7 +12,7 @@ import {
 import { authRequired } from "../middlewares/validateToken.js";
 import { upload } from "../middlewares/upload.js";
 import { validateSchema } from "../middlewares/validator.middleware.js";
-import { changePasswordSchema } from "../schemas/user.schema.js";
+import { changePasswordSchema, updateUserSchema } from "../schemas/user.schema.js";
 import { isAdmin } from "../middlewares/isAdmin.js";
 
 const router = Router();
@@ -27,7 +27,7 @@ router.put(
 router.get("/users", [authRequired, isAdmin], getAllUsers);
 router.put("/users/:id/deactivate", [authRequired, isAdmin], deactivateUser);
 router.put("/users/:id/activate", [authRequired, isAdmin], activateUser);
-router.put("/users/:id", [authRequired, isAdmin], updateUser);
+router.put("/users/:id", [authRequired, isAdmin, validateSchema(updateUserSchema)], updateUser);
 router.delete("/users/:id", [authRequired, isAdmin], deleteUser);
 
 export default router;

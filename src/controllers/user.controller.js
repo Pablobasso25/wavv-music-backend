@@ -141,21 +141,49 @@ export const activateUser = async (req, res) => {
 export const updateUser = async (req, res) => {
   try {
     const { username, email, subscriptionStatus } = req.body;
-    const updateData = {
-      username,
-      email,
-      "subscription.status": subscriptionStatus,
-    };
-
-    const user = await User.findByIdAndUpdate(req.params.id, updateData, {
-      new: true,
-    }).select("-password");
-
+    
+    const existingUsername = await User.findOne({ 
+      username, 
+      _id: { $ne: req.params.id } 
+    });
+    if (existingUsername) {
+      return res.status(400).json({ message: "El nombre de usuario ya está en uso" });
+    }
+    
+    const existingEmail = await User.findOne({ 
+      email, 
+      _id: { $ne: req.params.id } 
+    });
+    if (existingEmail) {
+      return res.status(400).json({ message: "El email ya está en uso" });
+    }
+    
+    const user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
+    
+    user.username = username;
+    user.email = email;
+    
+    if (subscriptionStatus) {
+      user.subscription.status = subscriptionStatus;
+      
+      if (subscriptionStatus === "premium") {
+        const startDate = new Date();
+        const endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 30);
+        user.subscription.startDate = startDate;
+        user.subscription.endDate = endDate;
+        user.subscription.warningEmailSent = false;
+      }
+    }
+    
+    await user.save();
+    
+    const updatedUser = await User.findById(req.params.id).select("-password");
 
-    res.json({ message: "Usuario actualizado", user });
+    res.json({ message: "Usuario actualizado", user: updatedUser });
   } catch (error) {
     return res.status(500).json({ message: "Error al actualizar usuario" });
   }
