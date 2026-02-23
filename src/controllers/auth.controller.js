@@ -24,7 +24,7 @@ export const register = async (req, res) => {
       role: role || "user",
     });
     const userSaved = await newUser.save();
-    
+
     try {
       await sendEmail({
         to_name: userSaved.username,
@@ -32,17 +32,16 @@ export const register = async (req, res) => {
         asunto_dinamico: "¡Bienvenido a Wavv Music!",
         cuerpo_mensaje: `Gracias por unirte a Wavv Music. Ahora puedes disfrutar de miles de canciones. ¡Comienza a escuchar!`,
       });
-    } catch (emailError) {
-    }
-    
+    } catch (emailError) {}
+
     const token = await createAccessToken({
       id: userSaved._id,
       role: userSaved.role,
     });
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: true,
+      sameSite: "none",
       maxAge: 24 * 60 * 60 * 1000,
     });
     res.json({
@@ -81,8 +80,8 @@ export const login = async (req, res) => {
     });
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: true,
+      sameSite: "none",
       maxAge: 24 * 60 * 60 * 1000,
     });
     res.json({
@@ -100,8 +99,8 @@ export const logout = (req, res) => {
   res.cookie("token", "", {
     expires: new Date(0),
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    secure: true,
+    sameSite: "none",
   });
   return res.sendStatus(200);
 };
@@ -111,7 +110,6 @@ export const forgotPassword = async (req, res) => {
   try {
     const user = await User.findOne({ email });
 
-    // IMPORTANTE: no revelar si existe o no
     if (!user) {
       return res.json({ message: "Si el email existe, se envió un link" });
     }
@@ -119,7 +117,7 @@ export const forgotPassword = async (req, res) => {
     const token = crypto.randomBytes(32).toString("hex");
 
     user.resetPasswordToken = token;
-    user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15 min
+    user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
 
     await user.save();
 
