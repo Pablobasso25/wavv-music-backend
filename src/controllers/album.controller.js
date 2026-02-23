@@ -2,8 +2,24 @@ import Album from "../models/album.model.js";
 
 export const getAlbums = async (req, res) => {
   try {
-    const albums = await Album.find().populate("user", "username");
-    res.json(albums);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const albums = await Album.find()
+      .populate("user", "username")
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    const total = await Album.countDocuments();
+
+    res.json({
+      albums,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      totalAlbums: total,
+    });
   } catch (error) {
     return res.status(500).json({ message: "Error al obtener álbumes" });
   }
@@ -36,5 +52,34 @@ export const deleteAlbum = async (req, res) => {
     res.json({ message: "Álbum eliminado correctamente" });
   } catch (error) {
     return res.status(500).json({ message: "Error al eliminar álbum" });
+  }
+};
+
+export const getAlbumById = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const album = await Album.findById(req.params.id).populate("user", "username");
+    
+    if (!album) {
+      return res.status(404).json({ message: "Álbum no encontrado" });
+    }
+
+    const totalTracks = album.tracks.length;
+    const paginatedTracks = album.tracks.slice(skip, skip + limit);
+
+    res.json({
+      album: {
+        ...album.toObject(),
+        tracks: paginatedTracks,
+      },
+      currentPage: page,
+      totalPages: Math.ceil(totalTracks / limit),
+      totalTracks: totalTracks,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Error al obtener álbum" });
   }
 };
