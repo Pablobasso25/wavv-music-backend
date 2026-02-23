@@ -2,8 +2,24 @@ import Song from "../models/song.model.js";
 
 export const getSongs = async (req, res) => {
   try {
-    const songs = await Song.find().populate("user", "username");
-    res.json(songs);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const songs = await Song.find()
+      .populate("user", "username")
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    const total = await Song.countDocuments();
+
+    res.json({
+      songs,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      totalSongs: total,
+    });
   } catch (error) {
     return res.status(500).json({ message: "Error al obtener canciones" });
   }

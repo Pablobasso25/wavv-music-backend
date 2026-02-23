@@ -7,18 +7,19 @@ export const addSongToPlaylist = async (req, res) => {
   try {
     const { songId, externalSong } = req.body;
     const userId = req.user.id;
-    
+
     let song;
 
     if (songId) {
       if (mongoose.Types.ObjectId.isValid(songId)) {
         song = await Song.findById(songId);
+
         if (!song) {
           return res.status(404).json({ message: "Canción no encontrada" });
         }
       } else {
-        return res.status(400).json({ 
-          message: "ID inválido. Use externalSong para canciones externas" 
+        return res.status(400).json({
+          message: "ID inválido. Use externalSong para canciones externas",
         });
       }
     } else if (externalSong) {
@@ -55,7 +56,7 @@ export const addSongToPlaylist = async (req, res) => {
     }
 
     const songExists = playlist.songs.some(
-      (s) => s.toString() === song._id.toString()
+      (s) => s.toString() === song._id.toString(),
     );
 
     if (songExists) {
@@ -64,13 +65,10 @@ export const addSongToPlaylist = async (req, res) => {
         message: "Esta canción ya está en tu playlist",
       });
     }
-
     playlist.songs.push(song._id);
     await playlist.save();
-
     res.json({ message: "Canción agregada a la playlist", song });
   } catch (error) {
-    console.error(error);
     return res.status(500).json({ message: "Error al agregar canción" });
   }
 };
@@ -78,13 +76,34 @@ export const addSongToPlaylist = async (req, res) => {
 export const getUserPlaylist = async (req, res) => {
   try {
     const userId = req.user.id;
-    const playlist = await Playlist.findOne({ user: userId }).populate("songs");
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
-    if (!playlist) {
-      return res.json([]);
+    const playlist = await Playlist.findOne({ user: userId });
+
+    if (!playlist || !playlist.songs || playlist.songs.length === 0) {
+      return res.json({
+        songs: [],
+        currentPage: page,
+        totalPages: 0,
+        totalSongs: 0,
+      });
     }
 
-    res.json(playlist.songs);
+    const totalSongs = playlist.songs.length;
+    const paginatedSongIds = playlist.songs.slice(skip, skip + limit);
+    const songs = await Song.find({ _id: { $in: paginatedSongIds } });
+    const orderedSongs = paginatedSongIds
+      .map((id) => songs.find((song) => song._id.toString() === id.toString()))
+      .filter(Boolean);
+
+    res.json({
+      songs: orderedSongs,
+      currentPage: page,
+      totalPages: Math.ceil(totalSongs / limit),
+      totalSongs: totalSongs,
+    });
   } catch (error) {
     res.status(500).json({ message: "Error al obtener la playlist" });
   }
@@ -106,5 +125,35 @@ export const removeSongFromPlaylist = async (req, res) => {
     res.json({ message: "Canción eliminada", playlist });
   } catch (error) {
     res.status(500).json({ message: "Error al eliminar canción" });
+  }
+};
+
+export const cleanPlaylist = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const playlist = await Playlist.findOne({ user: userId });
+
+    if (!playlist) {
+      return res.json({ message: "No hay playlist para limpiar" });
+    }
+
+    const validSongs = [];
+    for (const songId of playlist.songs) {
+      const song = await Song.findById(songId);
+      if (song) {
+        validSongs.push(songId);
+      }
+    }
+
+    playlist.songs = validSongs;
+    await playlist.save();
+
+    res.json({
+      message: "Playlist limpiada",
+      removed: playlist.songs.length - validSongs.length,
+      remaining: validSongs.length,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error al limpiar playlist" });
   }
 };
