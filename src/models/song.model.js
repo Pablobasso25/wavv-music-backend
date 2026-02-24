@@ -4,8 +4,8 @@ const songSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     artist: { type: String, required: true },
-    image: { type: String }, 
-    youtubeUrl: { type: String, required: true }, 
+    image: { type: String },
+    youtubeUrl: { type: String, required: true },
     duration: { type: String },
     isTrending: { type: Boolean, default: false },
     user: {
@@ -13,8 +13,13 @@ const songSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    source: {
+      type: String,
+      enum: ["admin", "user"],
+      default: "admin",
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model("Song", songSchema);
