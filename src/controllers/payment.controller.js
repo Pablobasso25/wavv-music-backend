@@ -58,7 +58,7 @@ export const receiveWebhook = async (req, res) => {
       `https://api.mercadopago.com/v1/payments/${paymentId}`⁠,
         {
           headers: {
-          Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`⁠,
+          Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`,
         },
           },
       );
@@ -76,16 +76,44 @@ export const receiveWebhook = async (req, res) => {
           userId,
           {
             "subscription.status": "premium",
-            "subscription.startDate": new Date(),
-            "subscription.mp_preference_id": data.id,
-          },
-          { new: true }
-        );
+          "subscription.mp_preference_id": data.order.id, 
+          "subscription.startDate": startDate,
+          "subscription.endDate": endDate,
+        },
+        { new: true },
+      );
+
+      console.log("Usuario actualizado a premium:", updatedUser.email);
+
+      const plan = data.description === 'Wavv Music - Premium' ? 'Premium' : 'Free'
+
+      const payment = new Payment({
+        user: userId,
+        paymentId: data.id,
+        status: data.status,
+        amount: data.transaction_amount,
+        plan,
+        paymentDate: data.date_created
+      })
+
+      await payment.save()
+
+      try {
+        await sendEmail({
+          to_name: updatedUser.username,
+          to_email: updatedUser.email,
+          asunto_dinamico: "¡Ahora sos Premium en Wavv Music!",
+          cuerpo_mensaje: `¡Felicidades! Tu suscripción Premium ha sido activada. Disfruta de música sin anuncios, playlist ilimitada y calidad superior. Tu suscripción expira el ${endDate.toLocaleString()}.`,
+        });
+        console.log("Email de confirmación enviado a:", updatedUser.email);
+      } catch (emailError) {
+        console.error("Error enviando email de confirmación:", emailError);
       }
     }
+
     res.sendStatus(200);
   } catch (error) {
-    console.error("Error en Webhook:", error.message);
+    console.error("Error procesando webhook de Mercado Pago:", error.message);
     res.sendStatus(500);
   }
 };
