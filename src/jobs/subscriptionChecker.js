@@ -1,54 +1,199 @@
 import cron from "node-cron";
 import User from "../models/user.model.js";
-import { sendEmail } from "../controllers/email.controller.js";
+import bcrypt from "bcryptjs";
+import cloudinary from "../libs/cloudinary.js";
+import Playlist from "../models/playlist.model.js";
+import Song from "../models/song.model.js";
 
-export const startSubscriptionChecker = () => {
-  cron.schedule("* * * * *", async () => {
-    try {
+export const profile = async (req, res) => {
+  try {
+    const userFound = await User.findById(req.user.id).select("-password");
+    if (!userFound) return res.status(404).json({ message: "Usuario no encontrado" });
+
+    if (userFound.subscription.status === "premium" && userFound.subscription.endDate) {
       const now = new Date();
-      const twoMinutesFromNow = new Date(now.getTime() + 2 * 60000);
+      const timeLeft = userFound.subscription.endDate - now;
+  
+      const daysLeft = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
 
-      const expiringUsers = await User.find({
-        "subscription.status": "premium",
-        "subscription.endDate": {
-          $gte: now,
-          $lte: twoMinutesFromNow,
-        },
-        "subscription.warningEmailSent": { $ne: true },
-      });
-
-      for (const user of expiringUsers) {
-        await sendEmail({
-          to_name: user.username,
-          to_email: user.email,
-          asunto_dinamico: "Tu suscripción Premium está por expirar",
-          cuerpo_mensaje: `Tu suscripción Premium expira el ${user.subscription.endDate.toLocaleString()}. Renueva ahora para seguir disfrutando sin interrupciones.`,
-        });
-
-        user.subscription.warningEmailSent = true;
-        await user.save();
-      }
-
-      const result = await User.updateMany(
-        {
-          "subscription.status": "premium",
-          "subscription.endDate": { $lt: now },
-        },
-        {
-          $set: {
-            "subscription.status": "free",
-            "subscription.warningEmailSent": false,
+      if (now > userFound.subscription.endDate) {
+        userFound.subscription.status = "free";
+        userFound.subscription.warningEmailSent = false;
+        await userFound.save();
+      } else if (daysLeft <= 3 && daysLeft >= 0) { 
+        return res.json({
+          ...userFound.toObject(),
+          subscriptionAlert: {
+            message: `Tu suscripción expira en ${daysLeft === 0 ? 'menos de un día' : daysLeft + ' día(s)'}`,
+            daysLeft,
           },
-        },
-      );
-
-      if (result.modifiedCount > 0) {
-        console.log(` ${result.modifiedCount} suscripciones expiradas`);
+        });
       }
-    } catch (error) {
-      console.error(" Error en subscription checker:", error);
     }
-  });
+    res.json(userFound);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+export const updateProfile = async (req, res) => {
+  try {
+    const { username, bio, password } = req.body;
+    let avatarUrl;
+    const updateData = { username, bio };
+    if (password && password.trim() !== "") {
+      const passwordHash = await bcrypt.hash(password, 10);
+      updateData.password = passwordHash;
+    }
+    if (req.file) {
+      const b64 = Buffer.from(req.file.buffer).toString("base64");
+      const dataURI = `data:${req.file.mimetype};base64,${b64}`;
+      const result = await cloudinary.uploader.upload(dataURI, {
+        folder: "avatars",
+      });
+      avatarUrl = result.secure_url;
+      updateData.avatar = avatarUrl;
+    }
+    const updatedUser = await User.findByIdAndUpdate(req.user.id, updateData, {
+      new: true,
+    }).select("-password");
+    res.json(updatedUser);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+export const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userFound = await User.findById(req.user.id);
+    const isMatch = await bcrypt.compare(currentPassword, userFound.password);
+    if (!isMatch)
+      return res.status(400).json({ message: "Contraseña actual incorrecta" });
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    userFound.password = passwordHash;
+    await userFound.save();
+    res.json({ message: "Contraseña actualizada correctamente" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password");
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener usuarios" });
+  }
+};
+export const getUsers = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const users = await User.find()
+      .select("-password")
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+    const total = await User.countDocuments();
+    res.json({
+      users,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      totalUsers: total,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Error al obtener usuarios" });
+  }
+};
+export const deactivateUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { isActive: false },
+      { new: true },
+    ).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+    res.json({ message: "Usuario dado de baja", user });
+  } catch (error) {
+    return res.status(500).json({ message: "Error al dar de baja usuario" });
+  }
+};
+export const activateUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { isActive: true },
+      { new: true },
+    ).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+    res.json({ message: "Usuario dado de alta", user });
+  } catch (error) {
+    return res.status(500).json({ message: "Error al dar de alta usuario" });
+  }
+};
+export const updateUser = async (req, res) => {
+  try {
+    const { username, email, subscriptionStatus } = req.body;
+    const existingUsername = await User.findOne({
+      username,
+      _id: { $ne: req.params.id },
+    });
+    if (existingUsername) {
+      return res
+        .status(400)
+        .json({ message: "El nombre de usuario ya está en uso" });
+    }
+    const existingEmail = await User.findOne({
+      email,
+      _id: { $ne: req.params.id },
+    });
+    if (existingEmail) {
+      return res.status(400).json({ message: "El email ya está en uso" });
+    }
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+    user.username = username;
+    user.email = email;
 
-  console.log(" Subscription checker iniciado");
+    if (subscriptionStatus) {
+      user.subscription.status = subscriptionStatus;
+      if (subscriptionStatus === "premium") {
+        const startDate = new Date();
+        const endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 30);
+        user.subscription.startDate = startDate;
+        user.subscription.endDate = endDate;
+        user.subscription.warningEmailSent = false;
+      }
+    }
+    await user.save();
+    const updatedUser = await User.findById(req.params.id).select("-password");
+    res.json({ message: "Usuario actualizado", user: updatedUser });
+  } catch (error) {
+    return res.status(500).json({ message: "Error al actualizar usuario" });
+  }
+};
+
+export const deleteUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+    try {
+      await Playlist.deleteOne({ user: req.params.id });
+      await Song.deleteMany({ user: req.params.id });
+    } catch (cleanupErr) {
+      console.error("Error limpiando datos del usuario:", cleanupErr.message);
+    }
+    res.json({ message: "Usuario eliminado permanentemente" });
+  } catch (error) {
+    return res.status(500).json({ message: "Error al eliminar usuario" });
+  }
 };
