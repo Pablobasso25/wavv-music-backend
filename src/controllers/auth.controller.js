@@ -40,8 +40,8 @@ export const register = async (req, res) => {
     });
     res.cookie("token", token, {
       httpOnly: true,
-      secure: true,
-      sameSite: "none",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 24 * 60 * 60 * 1000,
     });
     res.json({
@@ -64,43 +64,45 @@ export const login = async (req, res) => {
   const { email, password } = req.body;
   try {
     const userFound = await User.findOne({ email });
-    if (!userFound)
-      return res.status(400).json({ message: "Ususario no encontrado" });
+    if (!userFound) {
+      return res.status(400).json(["Email o contraseña incorrectos"]);
+    }
     if (userFound.isActive === false) {
-      return res
-        .status(403)
-        .json({ message: "Usuario dado de baja. Contacta al administrador." });
+      return res.status(403).json(["Usuario dado de baja. Contacta al administrador."]);
     }
     const isMatch = await bcrypt.compare(password, userFound.password);
-    if (!isMatch)
-      return res.status(400).json({ message: "Contraseña incorrecta" });
+    if (!isMatch) {
+      return res.status(400).json(["Email o contraseña incorrectos"]);
+    }
     const token = await createAccessToken({
       id: userFound._id,
       role: userFound.role,
     });
     res.cookie("token", token, {
       httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      maxAge: 24 * 60 * 60 * 1000,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 24 * 60 * 60 * 1000, // 1 día
     });
     res.json({
-      id: userFound.id,
+      id: userFound._id,
       username: userFound.username,
       email: userFound.email,
       subscription: userFound.subscription,
       role: userFound.role,
     });
+    
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error en Login Controller:", error.message);
+    res.status(500).json({ message: "Error interno del servidor" });
   }
 };
 export const logout = (req, res) => {
   res.cookie("token", "", {
     expires: new Date(0),
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   });
   return res.sendStatus(200);
 };
