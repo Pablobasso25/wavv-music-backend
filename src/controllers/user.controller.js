@@ -12,15 +12,13 @@ export const profile = async (req, res) => {
     if (userFound.subscription.status === "premium" && userFound.subscription.endDate) {
       const now = new Date();
       const timeLeft = userFound.subscription.endDate - now;
-      
-      // Calculamos los días restantes
       const daysLeft = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
 
       if (now > userFound.subscription.endDate) {
         userFound.subscription.status = "free";
-        userFound.subscription.warningEmailSent = false; // Reset para futura suscripción
+        userFound.subscription.warningEmailSent = false;
         await userFound.save();
-      } else if (daysLeft <= 3 && daysLeft >= 0) { // Aviso si faltan 3 días o menos
+      } else if (daysLeft <= 3 && daysLeft >= 0) { 
         return res.json({
           ...userFound.toObject(),
           subscriptionAlert: {
