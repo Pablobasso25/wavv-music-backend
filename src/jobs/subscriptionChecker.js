@@ -6,7 +6,7 @@ import Playlist from "../models/playlist.model.js";
 import Song from "../models/song.model.js";
 
 export const profile = async (req, res) => {
-    try {
+  try {
     const userFound = await User.findById(req.user.id).select("-password");
     if (!userFound) return res.status(404).json({ message: "Usuario no encontrado" });
 
@@ -153,7 +153,7 @@ export const updateUser = async (req, res) => {
     });
     if (existingEmail) {
       return res.status(400).json({ message: "El email ya está en uso" });
-      }
+    }
     const user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({ message: "Usuario no encontrado" });
