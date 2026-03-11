@@ -4,7 +4,7 @@ import { sendEmail } from "../controllers/email.controller.js";
 
 export const startSubscriptionChecker = () => {
   cron.schedule("0 0 * * *", async () => {
-  try {
+    try {
       const now = new Date();
 
       const DAYS_TO_WARN = 3;
@@ -26,11 +26,11 @@ export const startSubscriptionChecker = () => {
           to_email: user.email,
           asunto_dinamico: "Tu suscripción Premium está por terminar",
           cuerpo_mensaje:`Hola ${user.username}, te recordamos que tu suscripción Premium vencerá el ${user.subscription.endDate.toLocaleDateString()}. Renueva pronto para mantener tus beneficios.`,
-    });
+        });
 
         user.subscription.warningEmailSent = true;
         await user.save();
-    }
+      }
 
       const result = await User.updateMany(
         {
@@ -50,7 +50,7 @@ export const startSubscriptionChecker = () => {
          `[CronJob] ${result.modifiedCount} suscripciones expiradas y cambiadas a free.`,
         );
       }
-  } catch (error) {
+    } catch (error) {
       console.error(" Error en el checker de suscripciones:", error);
     }
   });
