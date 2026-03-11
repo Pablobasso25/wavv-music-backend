@@ -27,7 +27,7 @@ export const createPreference = async (req, res) => {
         back_urls: {
         success: `${FRONTEND_URL}/payment-success`,
           failure: `${FRONTEND_URL}/subscription`,
-        pending: `${FRONTEND_URL}/subscription``,
+        pending: `${FRONTEND_URL}/subscription`,
         },
       auto_return: FRONTEND_URL.includes("localhost") ? undefined : "approved", 
       binary_mode: true,
@@ -55,7 +55,7 @@ export const receiveWebhook = async (req, res) => {
   try {
       const paymentId = query.id || query["data.id"];
       const response = await fetch(
-      `https://api.mercadopago.com/v1/payments/${paymentId}`⁠,
+      `https://api.mercadopago.com/v1/payments/${paymentId}`,
         {
           headers: {
           Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`,
