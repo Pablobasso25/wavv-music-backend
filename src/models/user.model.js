@@ -6,24 +6,27 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      minlength: 2,
+      maxlength: 30,
     },
     email: {
       type: String,
       required: true,
       trim: true,
       unique: true,
+      minlength: 5,
+      maxlength: 50,
     },
     password: {
       type: String,
       required: true,
     },
-  resetPasswordToken: {
-  type: String,
-},
-
-resetPasswordExpires: {
-  type: Date,
-},
+    resetPasswordToken: {
+      type: String,
+    },
+    resetPasswordExpires: {
+      type: Date,
+    },
     role: {
       type: String,
       enum: ["user", "admin"],

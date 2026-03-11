@@ -7,24 +7,23 @@ import Song from "../models/song.model.js";
 export const profile = async (req, res) => {
   try {
     const userFound = await User.findById(req.user.id).select("-password");
-    if (!userFound)
-      return res.status(404).json({ message: "Usuario no encontrado" });
-    if (
-      userFound.subscription.status === "premium" &&
-      userFound.subscription.endDate
-    ) {
+    if (!userFound) return res.status(404).json({ message: "Usuario no encontrado" });
+
+    if (userFound.subscription.status === "premium" && userFound.subscription.endDate) {
       const now = new Date();
       const timeLeft = userFound.subscription.endDate - now;
-      const minutesLeft = Math.floor(timeLeft / 1000 / 60);
+      const daysLeft = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+
       if (now > userFound.subscription.endDate) {
         userFound.subscription.status = "free";
+        userFound.subscription.warningEmailSent = false;
         await userFound.save();
-      } else if (minutesLeft <= 5 && minutesLeft > 0) {
+      } else if (daysLeft <= 3 && daysLeft >= 0) { 
         return res.json({
           ...userFound.toObject(),
           subscriptionAlert: {
-            message: `Tu suscripción expira en ${minutesLeft} minuto(s)`,
-            minutesLeft,
+            message: `Tu suscripción expira en ${daysLeft === 0 ? 'menos de un día' : daysLeft + ' día(s)'}`,
+            daysLeft,
           },
         });
       }

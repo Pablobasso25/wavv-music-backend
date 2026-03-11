@@ -3,16 +3,19 @@ import User from "../models/user.model.js";
 import { sendEmail } from "../controllers/email.controller.js";
 
 export const startSubscriptionChecker = () => {
-  cron.schedule("* * * * *", async () => {
+  cron.schedule("0 0 * * *", async () => {
     try {
       const now = new Date();
-      const twoMinutesFromNow = new Date(now.getTime() + 2 * 60000);
+
+      const DAYS_TO_WARN = 3;
+      const warningDate = new Date(now);
+      warningDate.setDate(now.getDate() + DAYS_TO_WARN);
 
       const expiringUsers = await User.find({
         "subscription.status": "premium",
         "subscription.endDate": {
           $gte: now,
-          $lte: twoMinutesFromNow,
+          $lte: warningDate,
         },
         "subscription.warningEmailSent": { $ne: true },
       });
@@ -21,8 +24,8 @@ export const startSubscriptionChecker = () => {
         await sendEmail({
           to_name: user.username,
           to_email: user.email,
-          asunto_dinamico: "Tu suscripción Premium está por expirar",
-          cuerpo_mensaje: `Tu suscripción Premium expira el ${user.subscription.endDate.toLocaleString()}. Renueva ahora para seguir disfrutando sin interrupciones.`,
+          asunto_dinamico: "Tu suscripción Premium está por terminar",
+          cuerpo_mensaje:`Hola ${user.username}, te recordamos que tu suscripción Premium vencerá el ${user.subscription.endDate.toLocaleDateString()}. Renueva pronto para mantener tus beneficios.`,
         });
 
         user.subscription.warningEmailSent = true;
@@ -43,12 +46,14 @@ export const startSubscriptionChecker = () => {
       );
 
       if (result.modifiedCount > 0) {
-        console.log(` ${result.modifiedCount} suscripciones expiradas`);
+        console.log(
+         `[CronJob] ${result.modifiedCount} suscripciones expiradas y cambiadas a free.`,
+        );
       }
     } catch (error) {
-      console.error(" Error en subscription checker:", error);
+      console.error(" Error en el checker de suscripciones:", error);
     }
   });
 
-  console.log(" Subscription checker iniciado");
+  console.log(" CronJob: Subscription checker programado (cada 24hs)");
 };
