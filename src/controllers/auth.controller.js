@@ -40,8 +40,8 @@ export const register = async (req, res) => {
     });
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: true,
+      sameSite: "none",
       maxAge: 24 * 60 * 60 * 1000,
     });
     res.json({
@@ -68,7 +68,9 @@ export const login = async (req, res) => {
       return res.status(400).json(["Email o contraseña incorrectos"]);
     }
     if (userFound.isActive === false) {
-      return res.status(403).json(["Usuario dado de baja. Contacta al administrador."]);
+      return res
+        .status(403)
+        .json(["Usuario dado de baja. Contacta al administrador."]);
     }
     const isMatch = await bcrypt.compare(password, userFound.password);
     if (!isMatch) {
@@ -80,9 +82,9 @@ export const login = async (req, res) => {
     });
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 24 * 60 * 60 * 1000, // 1 día
+      secure: true,
+      sameSite: "none",
+      maxAge: 24 * 60 * 60 * 1000,
     });
     res.json({
       id: userFound._id,
@@ -91,7 +93,6 @@ export const login = async (req, res) => {
       subscription: userFound.subscription,
       role: userFound.role,
     });
-    
   } catch (error) {
     console.error("Error en Login Controller:", error.message);
     res.status(500).json({ message: "Error interno del servidor" });
@@ -101,8 +102,8 @@ export const logout = (req, res) => {
   res.cookie("token", "", {
     expires: new Date(0),
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    secure: true,
+    sameSite: "none",
   });
   return res.sendStatus(200);
 };
