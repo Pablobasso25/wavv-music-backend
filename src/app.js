@@ -8,6 +8,7 @@ import playlistRoutes from "./routes/playlist.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
 import albumRoutes from "./routes/album.routes.js";
+import planRoutes from "./routes/plan.routes.js";
 import { TOKEN_SECRET } from "./config.js"
 
 const app = express();
@@ -32,4 +33,5 @@ app.use("/api", playlistRoutes);
 app.use("/api", userRoutes);
 app.use("/api", albumRoutes);
 app.use("/api", paymentRoutes);
+app.use("/api", planRoutes);
 export default app;
