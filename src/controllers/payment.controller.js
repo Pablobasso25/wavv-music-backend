@@ -1,6 +1,7 @@
 import { MercadoPagoConfig, Preference } from "mercadopago";
 import User from "../models/user.model.js";
 import { sendEmail } from "./email.controller.js";
+import Payment from "../models/payment.model.js";
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN,
