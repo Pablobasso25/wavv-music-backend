@@ -2,6 +2,7 @@ import { MercadoPagoConfig, Preference } from "mercadopago";
 import User from "../models/user.model.js";
 import { sendEmail } from "./email.controller.js";
 import Payment from "../models/payment.model.js";
+import Plan from "../models/plan.model.js";
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN,
@@ -9,7 +10,11 @@ const client = new MercadoPagoConfig({
 
 export const createPreference = async (req, res) => {
   try {
-    const { planType, price } = req.body;
+    const { planId } = req.body;
+    const plan = await Plan.findById(planId);
+    if (!plan || !plan.isActive) {
+      return res.status(404).json({ message: "Plan no encontrado o inactivo" });
+    }
     const preference = new Preference(client);
 
     const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
@@ -18,10 +23,10 @@ export const createPreference = async (req, res) => {
     const preferenceBody = {
       items: [
         {
-          id: planType.toLowerCase(),
-          title: `Wavv Music - ${planType}`,
+          id: plan._id,
+          title: `Wavv Music - ${plan.name}`,
           quantity: 1,
-          unit_price: Number(price),
+          unit_price: Number(plan.price),
           currency_id: "ARS",
         },
       ],
@@ -30,7 +35,7 @@ export const createPreference = async (req, res) => {
         failure: `${FRONTEND_URL}/subscription`,
         pending: `${FRONTEND_URL}/subscription`,
       },
-      auto_return: FRONTEND_URL.includes("localhost") ? undefined : "approved", 
+      auto_return: FRONTEND_URL.includes("localhost") ? undefined : "approved",
       binary_mode: true,
       notification_url: `${process.env.BACKEND_URL}/api/payments/webhook`,
       external_reference: String(req.user.id),
@@ -45,7 +50,6 @@ export const createPreference = async (req, res) => {
 };
 
 export const receiveWebhook = async (req, res) => {
-  console.log("Webhook recibido:", req.query);
   const { query } = req;
   const topic = query.topic || query.type;
 
@@ -65,7 +69,6 @@ export const receiveWebhook = async (req, res) => {
     );
 
     const data = await response.json();
-    console.log("Datos del pago:", data);
 
     if (data.status === "approved") {
       const userId = data.external_reference;
@@ -73,40 +76,53 @@ export const receiveWebhook = async (req, res) => {
       const endDate = new Date(startDate);
       endDate.setDate(endDate.getDate() + 30);
 
+      const planId = data.additional_info.items[0].id;
+      const plan = await Plan.findById(planId);
+
+      if (!plan) {
+        console.error("Plan no encontrado para el pago:", data.id);
+        return res.sendStatus(400);
+      }
+
       const updatedUser = await User.findByIdAndUpdate(
         userId,
         {
           "subscription.status": "premium",
-          "subscription.mp_preference_id": data.order.id, 
+          "subscription.mp_preference_id": data.order?.id,
+          "subscription.plan": plan._id,
           "subscription.startDate": startDate,
           "subscription.endDate": endDate,
+          "subscription.adInterval": plan.adInterval ?? 0,
+          "subscription.playlistLimit": plan.playlistLimit ?? 9999,
         },
         { new: true },
       );
 
-      console.log("Usuario actualizado a premium:", updatedUser.email);
-
-      const plan = data.description === 'Wavv Music - Premium' ? 'Premium' : 'Free'
+      if (!updatedUser) {
+        console.error(
+          `Pago aprobado pero el usuario ${userId} ya no existe en la DB.`,
+        );
+        return res.sendStatus(404);
+      }
 
       const payment = new Payment({
         user: userId,
         paymentId: data.id,
         status: data.status,
         amount: data.transaction_amount,
-        plan,
-        paymentDate: data.date_created
-      })
+        plan: plan._id,
+        paymentDate: data.date_created,
+      });
 
-      await payment.save()
+      await payment.save();
 
       try {
         await sendEmail({
           to_name: updatedUser.username,
           to_email: updatedUser.email,
           asunto_dinamico: "¡Ahora sos Premium en Wavv Music!",
-          cuerpo_mensaje: `¡Felicidades! Tu suscripción Premium ha sido activada. Disfruta de música sin anuncios, playlist ilimitada y calidad superior. Tu suscripción expira el ${endDate.toLocaleString()}.`,
+          cuerpo_mensaje: `¡Felicidades! Tu suscripción Premium ha sido activada. Disfruta de música sin anuncios, playlist ilimitada y calidad superior. Tu suscripción expira el ${endDate.toLocaleDateString()}.`,
         });
-        console.log("Email de confirmación enviado a:", updatedUser.email);
       } catch (emailError) {
         console.error("Error enviando email de confirmación:", emailError);
       }
