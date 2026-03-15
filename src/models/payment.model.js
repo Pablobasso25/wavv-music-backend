@@ -5,7 +5,7 @@ const paymentSchema = new mongoose.Schema({
   paymentId: { type: String, required: true },
   status: { type: String, required: true },
   amount: { type: Number, required: true },
-  plan: { type: String, required: true },
+  plan: { type: mongoose.Schema.Types.ObjectId, ref: "Plan", required: true },
   paymentDate: { type: Date, required: true }
 }, { timestamps: true });
 
