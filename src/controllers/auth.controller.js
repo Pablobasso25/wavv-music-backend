@@ -32,16 +32,12 @@ export const register = async (req, res) => {
     });
     const userSaved = await newUser.save();
 
-    try {
-      await sendEmail({
-        to_name: userSaved.username,
-        to_email: userSaved.email,
-        asunto_dinamico: "¡Bienvenido a Wavv Music!",
-        cuerpo_mensaje: `Gracias por unirte a Wavv Music. Ahora puedes disfrutar de miles de canciones. ¡Comienza a escuchar!`,
-      });
-    } catch (emailError) {
-      console.error("Error al enviar email de bienvenida:", emailError.message);
-    }
+    await sendEmail({
+      to_name: userSaved.username,
+      to_email: userSaved.email,
+      asunto_dinamico: "¡Bienvenido a Wavv Music!",
+      cuerpo_mensaje: `Gracias por unirte a Wavv Music. Ahora puedes disfrutar de miles de canciones. ¡Comienza a escuchar!`,
+    });
 
     const token = await createAccessToken({
       id: userSaved._id,
