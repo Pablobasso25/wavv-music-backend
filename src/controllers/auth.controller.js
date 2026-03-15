@@ -3,6 +3,7 @@ import User from "../models/user.model.js";
 import { sendEmail } from "./email.controller.js";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import Plan from "../models/plan.model.js";
 
 export const register = async (req, res) => {
   const { email, password, username, role } = req.body;
@@ -16,12 +17,18 @@ export const register = async (req, res) => {
       }
     }
 
+    const freePlan = await Plan.findOne({ name: "Free" });
     const passwordHash = await bcrypt.hash(password, 10);
     const newUser = new User({
       username,
       email,
       password: passwordHash,
       role: role || "user",
+      subscription: {
+        status: "free",
+        adInterval: freePlan ? freePlan.adInterval : 3,
+        playlistLimit: freePlan ? freePlan.playlistLimit : 5,
+      },
     });
     const userSaved = await newUser.save();
 
@@ -32,7 +39,9 @@ export const register = async (req, res) => {
         asunto_dinamico: "¡Bienvenido a Wavv Music!",
         cuerpo_mensaje: `Gracias por unirte a Wavv Music. Ahora puedes disfrutar de miles de canciones. ¡Comienza a escuchar!`,
       });
-    } catch (emailError) {}
+    } catch (emailError) {
+      console.error("Error al enviar email de bienvenida:", emailError.message);
+    }
 
     const token = await createAccessToken({
       id: userSaved._id,
