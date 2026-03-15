@@ -7,7 +7,7 @@ export const addSongSchema = z.object({
       title: z.string(),
       artist: z.string(),
       image: z.string(),
-      youtubeUrl: z.string().optional(),
+      audioUrl: z.string().optional(),
       duration: z.string().optional(),
     }).optional(),
   }).refine(
