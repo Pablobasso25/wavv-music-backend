@@ -11,7 +11,7 @@ const albumSchema = new mongoose.Schema(
         trackId: { type: String },
         name: { type: String },
         duration_ms: { type: Number },
-        preview_url: { type: String },
+        audioUrl: { type: String },
         cover: { type: String },
       },
     ],

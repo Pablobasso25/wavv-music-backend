@@ -38,6 +38,8 @@ const userSchema = new mongoose.Schema(
       startDate: { type: Date },
       endDate: { type: Date },
       warningEmailSent: { type: Boolean, default: false },
+      adInterval: { type: Number, default: 3 },
+      playlistLimit: { type: Number, default: 5 },
     },
     bio: {
       type: String,

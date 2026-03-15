@@ -3,26 +3,34 @@ import bcrypt from "bcryptjs";
 import cloudinary from "../libs/cloudinary.js";
 import Playlist from "../models/playlist.model.js";
 import Song from "../models/song.model.js";
+import Plan from "../models/plan.model.js";
 
 export const profile = async (req, res) => {
   try {
     const userFound = await User.findById(req.user.id).select("-password");
-    if (!userFound) return res.status(404).json({ message: "Usuario no encontrado" });
+    if (!userFound)
+      return res.status(404).json({ message: "Usuario no encontrado" });
 
-    if (userFound.subscription.status === "premium" && userFound.subscription.endDate) {
+    if (
+      userFound.subscription.status === "premium" &&
+      userFound.subscription.endDate
+    ) {
       const now = new Date();
       const timeLeft = userFound.subscription.endDate - now;
       const daysLeft = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
 
       if (now > userFound.subscription.endDate) {
+        const freePlan = await Plan.findOne({ name: "Free" });
         userFound.subscription.status = "free";
         userFound.subscription.warningEmailSent = false;
+        userFound.subscription.adInterval = freePlan ? freePlan.adInterval : 3;
+        userFound.subscription.playlistLimit = freePlan ? freePlan.playlistLimit : 5;
         await userFound.save();
-      } else if (daysLeft <= 3 && daysLeft >= 0) { 
+      } else if (daysLeft <= 3 && daysLeft >= 0) {
         return res.json({
           ...userFound.toObject(),
           subscriptionAlert: {
-            message: `Tu suscripción expira en ${daysLeft === 0 ? 'menos de un día' : daysLeft + ' día(s)'}`,
+            message: `Tu suscripción expira en ${daysLeft === 0 ? "menos de un día" : daysLeft + " día(s)"}`,
             daysLeft,
           },
         });
@@ -162,12 +170,19 @@ export const updateUser = async (req, res) => {
     if (subscriptionStatus) {
       user.subscription.status = subscriptionStatus;
       if (subscriptionStatus === "premium") {
+        const premiumPlan = await Plan.findOne({ name: "Premium" });
         const startDate = new Date();
         const endDate = new Date(startDate);
         endDate.setDate(endDate.getDate() + 30);
         user.subscription.startDate = startDate;
         user.subscription.endDate = endDate;
         user.subscription.warningEmailSent = false;
+        user.subscription.adInterval = premiumPlan ? premiumPlan.adInterval : 0;
+        user.subscription.playlistLimit = premiumPlan ? premiumPlan.playlistLimit : 9999;
+      } else if (subscriptionStatus === "free") {
+        const freePlan = await Plan.findOne({ name: "Free" });
+        user.subscription.adInterval = freePlan ? freePlan.adInterval : 3;
+        user.subscription.playlistLimit = freePlan ? freePlan.playlistLimit : 5;
       }
     }
     await user.save();

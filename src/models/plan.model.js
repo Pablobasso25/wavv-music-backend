@@ -10,7 +10,8 @@ const planSchema = new mongoose.Schema(
     },
     price: { 
       type: Number, 
-      required: true 
+      required: true,
+      min: 0 
     },
     benefits: { 
       type: [String], 
@@ -19,6 +20,16 @@ const planSchema = new mongoose.Schema(
     isActive: { 
       type: Boolean, 
       default: true 
+    },
+    adInterval: {
+      type: Number,
+      default: 3,
+      min: 0
+    },
+    playlistLimit: {
+      type: Number,
+      default: 5,
+      min: 1
     }
   },
   { timestamps: true }
