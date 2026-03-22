@@ -21,6 +21,14 @@ export const initializeAdmin = async () => {
       });
 
       await admin.save();
+    } else {
+      if (adminExists.subscription.status !== "admin") {
+        adminExists.subscription.status = "admin";
+        await adminExists.save();
+        console.log(
+          "Privilegios del Admin actualizados",
+        );
+      }
     }
   } catch (error) {
     console.error("Error creando admin:", error.message);
