@@ -8,6 +8,12 @@ export const connectDB = async () => {
         "La variable MONGODB_URI no está llegando desde config.js",
       );
     }
+
+    if (mongoose.connection.readyState >= 1) {
+      console.log(">>> Utilizando la conexión de base de datos existente <<<");
+      return;
+    }
+
     await mongoose.connect(MONGODB_URI);
     console.log(">>> DB is connected to Wavv Music <<<");
   } catch (error) {
