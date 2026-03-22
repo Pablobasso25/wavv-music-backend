@@ -1,168 +1,92 @@
-# WavvMusic Backend
+# Wavv Music - Backend API
 
-WavvMusic Backend es la API que da soporte a la plataforma WavvMusica, encargada de la gestión de usuarios, autenticación, playlists y control de suscripciones bajo un modelo freemium. Está desarrollada con Node.js, Express y MongoDB, implementando validaciones estrictas y reglas de negocio bien definidas.
-
----
-
-## Descripción General
-
-El backend proporciona una arquitectura robusta orientada a:
-
-- Autenticación segura basada en JWT.
-- Validación estricta de datos mediante Zod.
-- Gestión de playlists con reglas diferenciadas para usuarios Free y Premium.
-- Protección de rutas y control de acceso.
-- Persistencia de datos en MongoDB utilizando Mongoose.
+Bienvenido al repositorio oficial del Backend de **Wavv Music**. Esta API RESTful robusta y escalable es el motor de nuestra plataforma de streaming musical, diseñada bajo el patrón de arquitectura MVC y orientada a ofrecer un alto rendimiento y seguridad.
 
 ---
 
-## Funcionalidades Principales
+## Características Principales
 
-### Autenticación y Seguridad
-
-- Registro y login de usuarios con validación de datos de entrada.
-- Encriptación segura de contraseñas.
-- Generación y validación de tokens JWT.
-- Esquemas preparados para recuperación y restablecimiento de contraseña.
-- Reglas estrictas de complejidad de contraseña:
-  - Mínimo 8 caracteres.
-  - Al menos una mayúscula.
-  - Al menos una minúscula.
-  - Al menos un número.
-  - Al menos un símbolo.
-  - Sin espacios ni caracteres potencialmente peligrosos como < o >.
+- **Arquitectura MVC**: Separación clara de responsabilidades (`controllers`, `middlewares`, `models`, `routes`, `schemas`).
+- **Autenticación Segura**: Implementación de JsonWebToken (JWT) almacenado en cookies HTTP-only.
+- **Autorización por Roles**: Protección de rutas y recursos según el perfil del usuario (Admin / User).
+- **Gestión de Suscripciones Premium**: Integración con MercadoPago vía Webhooks para automatizar pagos y ascensos de cuenta.
+- **Automatización de Tareas**: Revisión periódica de suscripciones expiradas utilizando `node-cron`.
+- **Validación de Datos**: Esquemas estrictos de validación en las peticiones mediante `Zod`.
+- **Gestión Multimedia**: Subida y optimización de avatares y audios integrados con Cloudinary.
+- **Comunicaciones Automáticas**: Envío de correos electrónicos transaccionales (como recuperación de contraseñas) a través de **Nodemailer**.
 
 ---
 
-### Gestión de Playlists
+## Endpoints Principales (Resumen)
 
-- Agregado de canciones:
-  - Soporte para canciones internas (por ID).
-  - Creación dinámica de canciones externas si no existen en la base de datos.
-- Prevención de canciones duplicadas dentro de una misma playlist.
-- Obtención de playlists con datos completos de canciones mediante populate.
-- Eliminación de canciones específicas por ID.
-
-#### Modelo Freemium
-
-- Usuarios Free:
-  - Límite máximo de 5 canciones por playlist.
-- Usuarios Premium:
-  - Sin límite de canciones.
-
-Las restricciones se validan directamente en la lógica del servidor.
+- **Auth:** `/api/auth/register`, `/login`, `/logout`, `/forgot-password`, `/reset-password`
+- **Usuarios:** Perfiles de usuario, gestión de datos, altas/bajas lógicas.
+- **Canciones:** CRUD de canciones, obtención de _Trending tracks_, e integración externa con la **API de iTunes** para búsquedas.
+- **Álbumes:** Creación y visualización de álbumes y sus colecciones.
+- **Playlists:** Creación y gestión de listas de reproducción personales con límites basados en el plan del usuario.
+- **Pagos:** Generación de preferencias de pago y recepción de Webhooks de MercadoPago.
 
 ---
 
-### Gestión de Usuarios
+## Stack Tecnológico
 
-- Actualización de perfil (username y email).
-- Cambio seguro de contraseña.
-- Gestión del estado de suscripción (free o premium).
-
----
-
-## Tecnologías Utilizadas
-
-- Runtime: Node.js
-- Framework: Express.js
-- Base de Datos: MongoDB
-- ODM: Mongoose
-- Validación de Datos: Zod
-- Autenticación: JSON Web Tokens (JWT)
+- **Entorno:** Node.js
+- **Framework:** Express.js
+- **Base de Datos:** MongoDB & Mongoose (ODM)
+- **Herramientas & Librerías:** Zod, JsonWebToken, Cloudinary, Nodemailer, MercadoPago SDK, Node-cron, Bcryptjs.
 
 ---
 
-## Prerrequisitos
+## Instalación Local
 
-Antes de ejecutar el proyecto, asegúrate de tener instalado:
+Sigue estos pasos para levantar el entorno de desarrollo en tu máquina local:
 
-- Node.js (v14 o superior)
-- MongoDB (instancia local o MongoDB Atlas)
+1. **Clonar el repositorio:**
 
----
+   ```bash
+   git clone https://github.com/tu-usuario/Backend-Wavv-Music.git
+   cd Backend-Wavv-Music
+   ```
 
-## Instalación y Configuración
+2. **Instalar dependencias:**
 
-### 1. Clonar el repositorio
+   ```bash
+   npm install
+   ```
 
-git clone <url-de-tu-repositorio>  
-cd WavvMusicaBackend  
+3. **Configurar variables de entorno:**
+   Crea un archivo `.env` en la raíz del proyecto basándote en un `.env.example`. Necesitarás configurar las siguientes variables clave:
 
-### 2. Instalar dependencias
+   ```env
+   MONGODB_URI=tu_conexion_a_mongodb
+   PORT=4000
+   TOKEN_SECRET=tu_secreto_jwt
+   MP_ACCESS_TOKEN=tu_token_de_prueba_de_mercadopago
+   CLOUDINARY_URL=tu_url_de_cloudinary
+   EMAIL_USER=tu_correo_smtp@gmail.com
+   EMAIL_PASS=tu_contraseña_de_aplicacion
+   FRONTEND_URL=http://localhost:5173
+   ```
 
-npm install  
-
-### 3. Configurar variables de entorno
-
-Crear un archivo .env en la raíz del proyecto con el siguiente contenido:
-
-PORT=3000  
-MONGODB_URI=mongodb://localhost:27017/wavvmusica  
-JWT_SECRET=tu_secreto_super_seguro  
-
-### 4. Iniciar el servidor
-
-Modo producción:
-
-npm start  
-
-Modo desarrollo:
-
-npm run dev  
-
----
-
-## Endpoints Principales
-
-### Playlist
-
-Método | Endpoint | Descripción
--------|----------|------------
-POST | /playlist/add | Agrega una canción validando límite Free vs Premium.
-GET | /playlist | Obtiene la playlist del usuario autenticado.
-DELETE | /playlist/:songId | Elimina una canción de la playlist.
+4. **Ejecutar el servidor en modo desarrollo:**
+   ```bash
+   npm run dev
+   ```
+   El servidor estará corriendo en `http://localhost:4000`.
 
 ---
 
-### Autenticación y Usuarios
+## Equipo de Desarrollo
 
-Método | Endpoint | Descripción
--------|----------|------------
-POST | /auth/register | Registro de nuevo usuario.
-POST | /auth/login | Inicio de sesión.
-PUT | /user/update | Actualiza datos del perfil.
-PUT | /user/change-password | Cambia la contraseña actual.
+Este proyecto fue creado y es mantenido por:
 
----
-
-## Reglas de Validación (Zod)
-
-El proyecto utiliza esquemas estrictos para garantizar la integridad y seguridad de los datos:
-
-- Username:
-  - Entre 2 y 30 caracteres.
-  - Solo caracteres alfanuméricos.
-
-- Password:
-  - Entre 8 y 20 caracteres.
-  - Requiere mayúscula, minúscula, número y símbolo.
-  - No permite espacios.
-  - Bloquea caracteres potencialmente peligrosos como < y >.
-
----
-
-## Arquitectura
-
-La estructura del proyecto sigue una separación clara de responsabilidades:
-
-- Controladores para la lógica de negocio.
-- Modelos de Mongoose para la definición de esquemas.
-- Middlewares para autenticación y validaciones.
-- Rutas organizadas por dominio (auth, user, playlist).
+- Pablo Basso - @Pablobasso25
+- Tomás Gómez - @tomasgomez18
+- Luhana Jakubowicz - @JLuhanaJakubowicz
+- Juan Ferreyra - @JuanFerreyra18
 
 ---
 
 ## Licencia
 
-Proyecto desarrollado con fines educativos y de práctica profesional.
+Este proyecto está bajo la Licencia **MIT**. Eres libre de usar, modificar y distribuir este software. Consulta el archivo `LICENSE` para más detalles.
