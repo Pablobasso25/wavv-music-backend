@@ -63,7 +63,7 @@ export const addSongToPlaylist = async (req, res) => {
     const user = await User.findById(userId);
     const limit = user.subscription.playlistLimit ?? 5;
 
-    if (playlist.songs.length >= limit) {
+    if (user.role !== "admin" && playlist.songs.length >= limit) {
       return res.status(403).json({
         message:
           `Límite de ${limit} canciones alcanzado. ${user.subscription.status === "free" ? "¡Pasate a premium!" : ""}`.trim(),
